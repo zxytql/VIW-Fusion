@@ -9,10 +9,11 @@
 
 #pragma once
  
+#include "ros_things.h"
 #include <thread>
 #include <mutex>
-#include <std_msgs/Header.h>
-#include <std_msgs/Float32.h>
+// #include <std_msgs/Header.h>
+// #include <std_msgs/Float32.h>
 #include <ceres/ceres.h>
 #include <unordered_map>
 #include <queue>

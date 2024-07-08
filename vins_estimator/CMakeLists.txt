@@ -2,54 +2,70 @@ cmake_minimum_required(VERSION 2.8.3)
 project(vins)
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_FLAGS "-std=c++11")
+set(CMAKE_CXX_FLAGS "-std=c++14")
 #-DEIGEN_USE_MKL_ALL")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    std_msgs
-    geometry_msgs
-    nav_msgs
-    tf
-    cv_bridge
-    camera_models
-    image_transport
-        rosbag)
-set(OpenCV_DIR "/usr/local/share/OpenCV")
+# find_package(catkin REQUIRED COMPONENTS
+#     roscpp
+#     std_msgs
+#     geometry_msgs
+#     nav_msgs
+#     tf
+#     cv_bridge
+#     camera_models
+#     image_transport
+#         rosbag)
+include_directories(${CMAKE_SOURCE_DIR}/../camera_models/include)
+add_library( camera_models SHARED IMPORTED )
+
+set_target_properties(camera_models PROPERTIES IMPORTED_LOCATION  ${CMAKE_SOURCE_DIR}/../camera_models/build/libcamera_models.so)
+
+set(OpenCV_DIR /home/zxx/work/opencv-4.2.0/build/install/lib/cmake/opencv4)
 find_package(OpenCV REQUIRED)
 
 message(WARNING "OpenCV_VERSION: ${OpenCV_VERSION}")
 
 find_package(Ceres REQUIRED)
-
 include_directories(${CERES_INCLUDE_DIRS})
+
+find_package(Eigen3 REQUIRED)
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
+include_directories(${Boost_INCLUDE_DIRS})
+
 #template sophus
 #set(Sophus_DIR "/home/td/slam/install/sophus/share/sophus/cmake/")
 find_package(Sophus REQUIRED)
 # include_directories(/home/td/slam/install/sophus/include)
 
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(Eigen3)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
-)
+include_directories(include # source directory include folder
+    src
+    # ${CMAKE_SOURCE_DIR}/ThirdParty/GeographicLib/include
+    )
+
+# set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+# find_package(Eigen3)
+# include_directories(
+#   ${catkin_INCLUDE_DIRS}
+#   ${EIGEN3_INCLUDE_DIR}
+# )
 
 
-catkin_package(
-  INCLUDE_DIRS src
-  LIBRARIES vins_lib
-  CATKIN_DEPENDS roscpp
-    std_msgs
-    geometry_msgs
-    nav_msgs
-    tf
-    cv_bridge
-    camera_models
-    image_transport
-        rosbag
-)
+# catkin_package(
+#   INCLUDE_DIRS src
+#   LIBRARIES vins_lib
+#   CATKIN_DEPENDS roscpp
+#     std_msgs
+#     geometry_msgs
+#     nav_msgs
+#     tf
+#     cv_bridge
+#     camera_models
+#     image_transport
+#         rosbag
+# )
 
 add_library(vins_lib
         src/estimator/parameters.cpp
@@ -71,11 +87,11 @@ add_library(vins_lib
         src/initial/initial_sfm.cpp
         src/initial/initial_ex_rotation.cpp
         src/featureTracker/feature_tracker.cpp)
-target_link_libraries(vins_lib ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+target_link_libraries(vins_lib camera_models ${OpenCV_LIBS} ${CERES_LIBRARIES})
 
 
-add_executable(vins_node src/rosNodeTest.cpp)
-target_link_libraries(vins_node vins_lib)
+# add_executable(vins_node src/rosNodeTest.cpp)
+# target_link_libraries(vins_node vins_lib)
 
 add_executable(viwo_node src/rosNodeTestWheel.cpp)
 target_link_libraries(viwo_node vins_lib)
@@ -86,12 +102,12 @@ target_link_libraries(viwo_node vins_lib)
 #add_executable(kitti_odom_test src/KITTIOdomTest.cpp)
 #target_link_libraries(kitti_odom_test vins_lib)
 
-add_executable(simulation_node src/simulationTest.cpp)
-target_link_libraries(simulation_node vins_lib)
+# add_executable(simulation_node src/simulationTest.cpp)
+# target_link_libraries(simulation_node vins_lib)
 
 #add_executable(kitti_gps_test src/KITTIGPSTest.cpp)
 #target_link_libraries(kitti_gps_test vins_lib)
 
-add_executable(bag_writer src/tool/bagwriter.cpp)
-target_link_libraries(bag_writer ${catkin_LIBRARIES})
+# add_executable(bag_writer src/tool/bagwriter.cpp)
+# target_link_libraries(bag_writer ${catkin_LIBRARIES})
 

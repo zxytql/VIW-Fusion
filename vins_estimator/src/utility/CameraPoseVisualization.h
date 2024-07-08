@@ -8,11 +8,11 @@
  *******************************************************/
 
 #pragma once
-
-#include <ros/ros.h>
-#include <std_msgs/ColorRGBA.h>
-#include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
+#include "ros_things.h"
+// #include <ros/ros.h>
+// #include <std_msgs/ColorRGBA.h>
+// #include <visualization_msgs/Marker.h>
+// #include <visualization_msgs/MarkerArray.h>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
@@ -30,13 +30,13 @@ public:
 	void add_pose(const Eigen::Vector3d& p, const Eigen::Quaterniond& q);
 	void reset();
 
-	void publish_by(ros::Publisher& pub, const std_msgs::Header& header);
+	// void publish_by(ros::Publisher& pub, const std_msgs::Header& header);
 	void add_edge(const Eigen::Vector3d& p0, const Eigen::Vector3d& p1);
 	void add_loopedge(const Eigen::Vector3d& p0, const Eigen::Vector3d& p1);
 private:
-	std::vector<visualization_msgs::Marker> m_markers;
-	std_msgs::ColorRGBA m_image_boundary_color;
-	std_msgs::ColorRGBA m_optical_center_connector_color;
+	// std::vector<visualization_msgs::Marker> m_markers;
+	// std_msgs::ColorRGBA m_image_boundary_color;
+	// std_msgs::ColorRGBA m_optical_center_connector_color;
 	double m_scale;
 	double m_line_width;
 

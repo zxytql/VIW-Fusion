@@ -8,7 +8,8 @@
  *******************************************************/
 
 #pragma once
-#include <ros/assert.h>
+#include "ros_things.h"
+// #include <ros/assert.h>
 #include <iostream>
 #include <eigen3/Eigen/Dense>
 
