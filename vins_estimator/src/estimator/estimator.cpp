@@ -8,9 +8,13 @@
  *******************************************************/
 
 #include "estimator.h"
-#include "../utility/visualization.h"
+// #include "../utility/visualization.h"
 #include "../factor/pose_subset_parameterization.h"
 #include "../factor/orientation_subset_parameterization.h"
+#include <opencv2/highgui/highgui_c.h>
+
+static double sum_of_path = 0;
+static Vector3d last_path(0.0, 0.0, 0.0);
 
 Estimator::Estimator(): f_manager{Rs}
 {
@@ -225,17 +229,24 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     if (SHOW_TRACK)
     {
         cv::Mat imgTrack = featureTracker.getTrackImage();
-        pubTrackImage(imgTrack, t);
+        cv::namedWindow("vio", CV_WINDOW_NORMAL); 
+        cv::resizeWindow("vio", imgTrack.cols, imgTrack.rows); //TODO
+        cv::imshow("vio", imgTrack);
+        cv::waitKey(1);
+        // pubTrackImage(imgTrack, t);
     }
     
     if(MULTIPLE_THREAD)
     {     
-        if(inputImageCnt % 2 == 0)
-        {
-            mBuf.lock();
-            featureBuf.push(make_pair(t, featureFrame));
-            mBuf.unlock();
-        }
+        // if(inputImageCnt % 2 == 0)
+        // {
+        //     mBuf.lock();
+        //     featureBuf.push(make_pair(t, featureFrame));
+        //     mBuf.unlock();
+        // }
+        mBuf.lock();
+        featureBuf.push(make_pair(t, featureFrame));
+        mBuf.unlock();
     }
     else
     {
@@ -248,53 +259,53 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
     }
     
 }
-void Estimator::inputFeature(double t, const vector<cv::Point2f>& _features0, const vector<cv::Point2f>& _features1)
-{
-    inputImageCnt++;
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
-    TicToc featureTrackerTime;
+// void Estimator::inputFeature(double t, const vector<cv::Point2f>& _features0, const vector<cv::Point2f>& _features1)
+// {
+//     inputImageCnt++;
+//     map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
+//     TicToc featureTrackerTime;
 
-    if(_features1.empty())
-        featureFrame = featureTracker.trackFeature(t, _features0);
-    else
-        featureFrame = featureTracker.trackFeature(t, _features0, _features1);
-    //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+//     if(_features1.empty())
+//         featureFrame = featureTracker.trackFeature(t, _features0);
+//     else
+//         featureFrame = featureTracker.trackFeature(t, _features0, _features1);
+//     //printf("featureTracker time: %f\n", featureTrackerTime.toc());
 
-    if (SHOW_TRACK)
-    {
-        cv::Mat imgTrack = featureTracker.getTrackImage();
-        pubTrackImage(imgTrack, t);
-    }
+//     if (SHOW_TRACK)
+//     {
+//         cv::Mat imgTrack = featureTracker.getTrackImage();
+//         pubTrackImage(imgTrack, t);
+//     }
 
-    if(MULTIPLE_THREAD)
-    {
-        if(inputImageCnt % 2 == 0)
-        {
-            mBuf.lock();
-            featureBuf.push(make_pair(t, featureFrame));
-            mBuf.unlock();
-        }
-    }
-    else
-    {
-        mBuf.lock();
-        featureBuf.push(make_pair(t, featureFrame));
-        mBuf.unlock();
-        TicToc processTime;
-        processMeasurements();
+//     if(MULTIPLE_THREAD)
+//     {
+//         if(inputImageCnt % 2 == 0)
+//         {
+//             mBuf.lock();
+//             featureBuf.push(make_pair(t, featureFrame));
+//             mBuf.unlock();
+//         }
+//     }
+//     else
+//     {
+//         mBuf.lock();
+//         featureBuf.push(make_pair(t, featureFrame));
+//         mBuf.unlock();
+//         TicToc processTime;
+//         processMeasurements();
 
-//        if(solver_flag == SolverFlag::NON_LINEAR){
-//            std::ofstream ofs(PROCESS_TIME_PATH, ios::app);
-//            if (!ofs.is_open()) {
-//                ROS_WARN("cannot open %s", PROCESS_TIME_PATH.c_str());
-//            }
-//            ofs << processTime.toc()<<std::endl;
-//        }
+// //        if(solver_flag == SolverFlag::NON_LINEAR){
+// //            std::ofstream ofs(PROCESS_TIME_PATH, ios::app);
+// //            if (!ofs.is_open()) {
+// //                ROS_WARN("cannot open %s", PROCESS_TIME_PATH.c_str());
+// //            }
+// //            ofs << processTime.toc()<<std::endl;
+// //        }
 
-        printf("process time: %f\n", processTime.toc());
-    }
+//         printf("process time: %f\n", processTime.toc());
+//     }
 
-}
+// }
 void Estimator::inputGroundtruth(double t, Eigen::Matrix<double,7,1>& _data)
 {
 
@@ -315,7 +326,7 @@ void Estimator::inputIMU(double t, const Vector3d &linearAcceleration, const Vec
     {
         mPropagate.lock();
         fastPredictIMU(t, linearAcceleration, angularVelocity);
-        pubLatestOdometry(latest_P, latest_Q, latest_V, t);
+        // pubLatestOdometry(latest_P, latest_Q, latest_V, t);
         mPropagate.unlock();
     }
 }
@@ -331,12 +342,12 @@ void Estimator::inputWheel(double t, const Vector3d &linearVelocity, const Vecto
     {
         mWheelPropagate.lock();
         fastPredictWheel(t, linearVelocity, angularVelocity);
-        pubWheelLatestOdometry(latest_P_wheel, latest_Q_wheel, latest_V_wheel, t);
+        // pubWheelLatestOdometry(latest_P_wheel, latest_Q_wheel, latest_V_wheel, t);
         Eigen::Quaterniond q;
         Eigen::Vector3d p;
         Eigen::Vector3d v;
         fastPredictPureWheel(t, linearVelocity, angularVelocity, p, q, v);
-        pubPureWheelLatestOdometry(p, q, v, t);
+        // pubPureWheelLatestOdometry(p, q, v, t);
         mWheelPropagate.unlock();
     }
 }
@@ -534,13 +545,13 @@ void Estimator::processMeasurements()
             header.stamp = ros::Time(feature.first);
 
             pubOdometry(*this, header);
-            Eigen::Matrix<double, 7, 1> pose;
-            pubGroundTruth(*this, header, pose, td);
-            pubKeyPoses(*this, header);
-            pubCameraPose(*this, header);
-            pubPointCloud(*this, header);
-            pubKeyframe(*this);
-            pubTF(*this, header);
+            // Eigen::Matrix<double, 7, 1> pose;
+            // pubGroundTruth(*this, header, pose, td);
+            // pubKeyPoses(*this, header);
+            // pubCameraPose(*this, header);
+            // pubPointCloud(*this, header);
+            // pubKeyframe(*this);
+            // pubTF(*this, header);
 
             //可视化预积分积分的轨迹
 //            if(USE_WHEEL && solver_flag == NON_LINEAR){
@@ -2310,4 +2321,198 @@ void Estimator::updateLatestStates()
         tmp_wheel_gyrBuf.pop();
     }
     mWheelPropagate.unlock();
+}
+
+// visualization.cpp
+void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
+{
+    if (estimator.solver_flag == Estimator::SolverFlag::NON_LINEAR)
+    {
+        nav_msgs::Odometry odometry;
+        odometry.header = header;
+        odometry.header.frame_id = "world";
+        odometry.child_frame_id = "world";
+        Quaterniond tmp_Q;
+        tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE]);
+        odometry.pose.pose.position.x = estimator.Ps[WINDOW_SIZE].x();
+        odometry.pose.pose.position.y = estimator.Ps[WINDOW_SIZE].y();
+        odometry.pose.pose.position.z = estimator.Ps[WINDOW_SIZE].z();
+        odometry.pose.pose.orientation.x = tmp_Q.x();
+        odometry.pose.pose.orientation.y = tmp_Q.y();
+        odometry.pose.pose.orientation.z = tmp_Q.z();
+        odometry.pose.pose.orientation.w = tmp_Q.w();
+        odometry.twist.twist.linear.x = estimator.Vs[WINDOW_SIZE].x();
+        odometry.twist.twist.linear.y = estimator.Vs[WINDOW_SIZE].y();
+        odometry.twist.twist.linear.z = estimator.Vs[WINDOW_SIZE].z();
+        // pub_odometry.publish(odometry);
+
+        geometry_msgs::PoseStamped pose_stamped;
+        pose_stamped.header = header;
+        pose_stamped.header.frame_id = "world";
+        pose_stamped.pose = odometry.pose.pose;
+        // path.header = header;
+        // path.header.frame_id = "world";
+        // path.poses.push_back(pose_stamped);
+        // pub_path.publish(path);
+
+//        // write result to file
+//        ofstream foutC(VINS_RESULT_PATH, ios::app);
+//        foutC.setf(ios::fixed, ios::floatfield);
+//        foutC.precision(0);
+//        foutC << header.stamp.toSec() * 1e9 << ",";
+//        foutC.precision(5);
+//        foutC << estimator.Ps[WINDOW_SIZE].x() << ","
+//              << estimator.Ps[WINDOW_SIZE].y() << ","
+//              << estimator.Ps[WINDOW_SIZE].z() << ","
+//              << tmp_Q.w() << ","
+//              << tmp_Q.x() << ","
+//              << tmp_Q.y() << ","
+//              << tmp_Q.z() << ","
+//              << estimator.Vs[WINDOW_SIZE].x() << ","
+//              << estimator.Vs[WINDOW_SIZE].y() << ","
+//              << estimator.Vs[WINDOW_SIZE].z() << "," << endl;
+//        foutC.close();
+//        Eigen::Vector3d tmp_T = estimator.Ps[WINDOW_SIZE];
+//        printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.toSec(), tmp_T.x(), tmp_T.y(), tmp_T.z(),
+//                                                          tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
+
+        // write result to file
+        ofstream foutC(VINS_RESULT_PATH, ios::app);
+        foutC.setf(ios::fixed, ios::floatfield);
+        foutC << std::setprecision(0)
+              << header.stamp.toSec()*1e9<< " "
+              << std::setprecision(9)
+              << pose_stamped.pose.position.x << " "
+              << pose_stamped.pose.position.y << " "
+              << pose_stamped.pose.position.z << " "
+              << pose_stamped.pose.orientation.x << " "
+              << pose_stamped.pose.orientation.y << " "
+              << pose_stamped.pose.orientation.z << " "
+              << pose_stamped.pose.orientation.w << std::endl;
+        auto tmp_T = pose_stamped.pose.position;
+        printf("time: %f, t: %f %f %f q: %f %f %f %f \n", header.stamp.toSec(), tmp_T.x, tmp_T.y, tmp_T.z,
+               tmp_Q.w(), tmp_Q.x(), tmp_Q.y(), tmp_Q.z());
+
+    }
+}
+
+void printStatistics(const Estimator &estimator, double t)
+{
+//    if(ESTIMATE_INTRINSIC_WHEEL) {
+//        std::ofstream ofs(INTRINSIC_ITERATE_PATH, ios::app);
+//        if (!ofs.is_open()) {
+//            ROS_WARN("cannot open %s", INTRINSIC_ITERATE_PATH.c_str());
+//        }
+//        ofs << estimator.sx << " " << estimator.sy << " " << estimator.sw << std::endl;
+//    }
+//    if(ESTIMATE_EXTRINSIC_WHEEL) {
+//        std::ofstream ofs(EXTRINSIC_WHEEL_ITERATE_PATH, ios::app);
+//        if (!ofs.is_open()) {
+//            ROS_WARN("cannot open %s", EXTRINSIC_WHEEL_ITERATE_PATH.c_str());
+//        }
+//        ofs << estimator.tio.transpose() <<" "<< Utility::R2ypr(estimator.rio).transpose()<<std::endl;
+//    }
+//    if(ESTIMATE_EXTRINSIC) {
+//        std::ofstream ofs(EXTRINSIC_CAM_ITERATE_PATH, ios::app);
+//        if (!ofs.is_open()) {
+//            ROS_WARN("cannot open %s", EXTRINSIC_CAM_ITERATE_PATH.c_str());
+//        }
+//        ofs << estimator.tic[0].transpose() <<" "<< Utility::R2ypr(estimator.ric[0]).transpose()<<std::endl;
+//    }
+
+    if (estimator.solver_flag != Estimator::SolverFlag::NON_LINEAR)
+        return;
+    //printf("position: %f, %f, %f\r", estimator.Ps[WINDOW_SIZE].x(), estimator.Ps[WINDOW_SIZE].y(), estimator.Ps[WINDOW_SIZE].z());
+    cout << "position: " << estimator.Ps[WINDOW_SIZE].transpose();
+    cout << "orientation: " << estimator.Vs[WINDOW_SIZE].transpose();
+    if (ESTIMATE_EXTRINSIC || ESTIMATE_EXTRINSIC_WHEEL || USE_PLANE)
+    {
+        cv::FileStorage fs(EX_CALIB_RESULT_PATH, cv::FileStorage::WRITE);
+        if(ESTIMATE_EXTRINSIC){
+            for (int i = 0; i < NUM_OF_CAM; i++)
+            {
+                //ROS_DEBUG("calibration result for camera %d", i);
+                cout << "extirnsic tic: " << estimator.tic[i].transpose();
+                cout << "extrinsic ric: " << Utility::R2ypr(estimator.ric[i]).transpose();
+
+                Eigen::Matrix4d eigen_T = Eigen::Matrix4d::Identity();
+                eigen_T.block<3, 3>(0, 0) = estimator.ric[i];
+                eigen_T.block<3, 1>(0, 3) = estimator.tic[i];
+                cv::Mat cv_T;
+                cv::eigen2cv(eigen_T, cv_T);
+                if(i == 0)
+                    fs << "body_T_cam0" << cv_T ;
+                else
+                    fs << "body_T_cam1" << cv_T ;
+            }
+        }
+
+        if(ESTIMATE_EXTRINSIC_WHEEL){
+            //ROS_DEBUG("calibration result for camera %d", i);
+            cout << "extirnsic tio: " << estimator.tio.transpose();
+            cout << "extrinsic rio: " << Utility::R2ypr(estimator.rio).transpose();
+
+            Eigen::Matrix4d eigen_T = Eigen::Matrix4d::Identity();
+            eigen_T.block<3, 3>(0, 0) = estimator.rio;
+            eigen_T.block<3, 1>(0, 3) = estimator.tio;
+            cv::Mat cv_T;
+            cv::eigen2cv(eigen_T, cv_T);
+            fs << "body_T_wheel" << cv_T ;
+        }
+
+        if(USE_PLANE){
+            cout << "plane zpw: " << estimator.zpw;
+            cout << "plane rpw: " << Utility::R2ypr(estimator.rpw).transpose();
+
+            Eigen::Matrix3d eigen_T = estimator.rpw;
+            cv::Mat cv_T;
+            cv::eigen2cv(eigen_T, cv_T);
+            fs << "plane_R_world" << cv_T ;
+            fs << "plane_Z_world" <<estimator.zpw;
+        }
+
+        fs.release();
+    }
+    if(ESTIMATE_INTRINSIC_WHEEL){
+        cv::FileStorage fs(IN_CALIB_RESULT_PATH, cv::FileStorage::WRITE);
+
+        if(ESTIMATE_INTRINSIC_WHEEL){
+            //ROS_DEBUG("calibration result for camera %d", i);
+            cout << "intirnsic sx: " << estimator.sx << ", sy: " << estimator.sy << ", sw: " << estimator.sw << endl;
+            fs << "sx" << estimator.sx;
+            fs << "sy" << estimator.sy;
+            fs << "sw" << estimator.sw;
+        }
+
+
+    }
+
+    static double sum_of_time = 0;
+    static int sum_of_calculation = 0;
+    sum_of_time += t;
+    sum_of_calculation++;
+    // ROS_DEBUG("vo solver costs: %f ms", t);
+    // ROS_DEBUG("average of time %f ms", sum_of_time / sum_of_calculation);
+
+    sum_of_path += (estimator.Ps[WINDOW_SIZE] - last_path).norm();
+    last_path = estimator.Ps[WINDOW_SIZE];
+    // ROS_DEBUG("sum of path %f", sum_of_path);
+    if (ESTIMATE_TD){
+        printf("td %f \n", estimator.td);
+        std::ofstream ofs(TD_PATH, ios::app);
+        if (!ofs.is_open()) {
+            printf("cannot open %s \n", TD_PATH.c_str());
+        }
+        ofs << estimator.td<<std::endl;
+    }
+
+    if (ESTIMATE_TD_WHEEL){
+        printf("td_wheel %f \n", estimator.td_wheel);
+        std::ofstream ofs(TD_WHEEL_PATH, ios::app);
+        if (!ofs.is_open()) {
+            cout << "cannot open %s", TD_WHEEL_PATH.c_str();
+        }
+        ofs << estimator.td_wheel<<std::endl;
+    }
+
 }

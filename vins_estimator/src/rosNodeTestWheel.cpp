@@ -86,6 +86,24 @@ void wheel_callback(const nav_msgs::OdometryConstPtr &odom_msg)
     estimator.inputWheel(t, vel, gyr);
     return;
 }
+
+// 算法重启
+void restart_callback()
+{
+    printf("********************************************************\n");
+    printf("**             Encounter time shift                   **\n");
+    printf("**           VIO system is restarting!!               **\n");
+    printf("**                                                    **\n");
+    printf("********************************************************\n");
+
+    estimator.clearState();
+    estimator.setParameter();
+
+    is_img_time_shift = false;
+    is_imu_time_shift = false;
+    // is_initialized = false;
+    return ;
+}
 // 从msg中获取图片，返回值cv::Mat，输入是当前图像msg的指针
 // cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 // {
@@ -200,23 +218,6 @@ void imu_callback(const sensor_msgs::ImuConstPtr &imu_msg)
 //     estimator.inputFeature(t, featureFrame);
 //     return;
 // }
-
-void restart_callback()
-{
-    printf("********************************************************\n");
-    printf("**             Encounter time shift                   **\n");
-    printf("**           VIO system is restarting!!               **\n");
-    printf("**                                                    **\n");
-    printf("********************************************************\n");
-
-    estimator.clearState();
-    estimator.setParameter();
-
-    is_img_time_shift = false;
-    is_imu_time_shift = false;
-    //is_initialized = false;
-    return ;
-}
 
 int main(int argc, char **argv)
 {

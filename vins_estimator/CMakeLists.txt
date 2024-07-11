@@ -67,7 +67,7 @@ include_directories(include # source directory include folder
 #         rosbag
 # )
 
-add_library(vins_lib
+add_library(vins_lib SHARED
         src/estimator/parameters.cpp
         src/estimator/estimator.cpp
         src/estimator/feature_manager.cpp
@@ -80,8 +80,8 @@ add_library(vins_lib
         src/factor/projectionOneFrameTwoCamFactor.cpp
         src/factor/marginalization_factor.cpp
         src/utility/utility.cpp
-        src/utility/visualization.cpp
-        src/utility/CameraPoseVisualization.cpp
+#        src/utility/visualization.cpp
+#        src/utility/CameraPoseVisualization.cpp
         src/initial/solve_5pts.cpp
         src/initial/initial_aligment.cpp
         src/initial/initial_sfm.cpp

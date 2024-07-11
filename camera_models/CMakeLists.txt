@@ -51,7 +51,7 @@ include_directories("include")
 #         src/gpl/gpl.cc
 #         src/gpl/EigenQuaternionParameterization.cc)
 
-add_library(camera_models
+add_library(camera_models SHARED
         src/chessboard/Chessboard.cc
         src/calib/CameraCalibration.cc
         src/camera_models/Camera.cc

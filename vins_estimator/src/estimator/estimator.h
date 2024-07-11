@@ -228,3 +228,5 @@ class Estimator
     bool initFirstPoseFlag; //标记位姿是否初始化
     bool initThreadFlag;
 };
+void pubOdometry(const Estimator &estimator, const std_msgs::Header &header);
+void printStatistics(const Estimator &estimator, double t);

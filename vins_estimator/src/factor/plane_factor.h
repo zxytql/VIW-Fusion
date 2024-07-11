@@ -71,7 +71,7 @@ class PlaneFactor : public ceres::SizedCostFunction<3, 7, 7, 4, 1>
 
                 if (jacobian_pose_i.maxCoeff() > 1e8 || jacobian_pose_i.minCoeff() < -1e8)
                 {
-                    ROS_WARN("numerical unstable in preintegration");
+                    printf("numerical unstable in preintegration \n");
                     //std::cout << sqrt_info << std::endl;
                     //ROS_BREAK();
                 }
