@@ -93,7 +93,7 @@ target_link_libraries(vins_lib camera_models ${OpenCV_LIBS} ${CERES_LIBRARIES})
 # add_executable(vins_node src/rosNodeTest.cpp)
 # target_link_libraries(vins_node vins_lib)
 
-add_executable(viwo_node src/rosNodeTestWheel.cpp)
+add_executable(viwo_node src/main.cpp)
 target_link_libraries(viwo_node vins_lib)
 
 #add_executable(viwo_gazebo_node src/rosNodeTestWheelGazebo.cpp)
